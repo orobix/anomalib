@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.7.0+obx.1.2.1]
+
+### Updated
+
+- Allow training efficient_ad models with resolution different from 256x256 by adding interpolation to the teacher and student models
+
 ## [v0.7.0+obx.1.2.0]
 
 ### Updated
