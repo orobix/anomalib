@@ -13,7 +13,7 @@ import logging
 import torch
 from torch import nn
 from omegaconf import DictConfig, ListConfig
-from pytorch_lightning.utilities.types import STEP_OUTPUT
+from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from torch import Tensor
 
 from anomalib.models.components import AnomalyModule
@@ -70,6 +70,7 @@ class Patchcore(AnomalyModule):
         self.embeddings: list[Tensor] = []
         # self.automatic_optimization = False
         self.coreset_sampler = coreset_sampler
+        self.is_memory_bank_fitted = False
 
     def configure_optimizers(self) -> None:
         """Configure optimizers.
@@ -104,11 +105,22 @@ class Patchcore(AnomalyModule):
         # NOTE: Previous anomalib versions fit subsampling at the end of the epoch.
         #   This is not possible anymore with PyTorch Lightning v1.4.0 since validation
         #   is run within train epoch.
+        if len(self.embeddings) == 0:
+            # This is a workaround to allow automatic batch computation using lightning
+            train_dl = self.trainer.datamodule.train_dataloader()
+            batch = next(iter(train_dl))
+
+            batch = {k: v.to(self.device) for k, v in batch.items()}
+            self.model.training = True
+            self.training_step(batch)
+            self.model.training = False
+
         logger.info("Aggregating the embedding extracted from the training set.")
         embeddings = torch.vstack(self.embeddings)
 
         logger.info("Applying core-set subsampling to get the embedding.")
         self.model.subsample_embedding(embeddings, self.coreset_sampling_ratio, mode=self.coreset_sampler)
+        self.is_memory_bank_fitted = True
 
     def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:
         """Get batch of anomaly maps from input image batch.
@@ -127,6 +139,9 @@ class Patchcore(AnomalyModule):
         batch["pred_scores"] = anomaly_score
 
         return batch
+
+    def validation_epoch_end(self, outputs: EPOCH_OUTPUT) -> None:
+        return super().validation_epoch_end(outputs)
 
 
 class PatchcoreLightning(Patchcore):

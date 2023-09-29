@@ -94,7 +94,12 @@ class Padim(AnomalyModule):
         # NOTE: Previous anomalib versions fit Gaussian at the end of the epoch.
         #   This is not possible anymore with PyTorch Lightning v1.4.0 since validation
         #   is run within train epoch.
+        if len(self.embeddings) == 0:
+            logger.warning("No embeddings were extracted from the training set. Skipping Gaussian fitting.")
+            return
+
         logger.info("Aggregating the embedding extracted from the training set.")
+
         embeddings = torch.vstack(self.embeddings)
 
         logger.info("Fitting a Gaussian to the embedding collected from the training set.")
