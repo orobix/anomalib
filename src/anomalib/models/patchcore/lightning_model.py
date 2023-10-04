@@ -142,9 +142,6 @@ class Patchcore(AnomalyModule):
 
         return batch
 
-    def validation_epoch_end(self, outputs: EPOCH_OUTPUT) -> None:
-        return super().validation_epoch_end(outputs)
-
 
 class PatchcoreLightning(Patchcore):
     """PatchcoreLightning Module to train PatchCore algorithm.
