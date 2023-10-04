@@ -68,6 +68,11 @@ class Padim(AnomalyModule):
         """PADIM doesn't require optimization, therefore returns no optimizers."""
         return None
 
+    def on_train_epoch_start(self) -> None:
+        self.embeddings = []
+        self.stats = []
+        return super().on_train_epoch_start()
+
     def training_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> None:
         """Training Step of PADIM. For each batch, hierarchical features are extracted from the CNN.
 

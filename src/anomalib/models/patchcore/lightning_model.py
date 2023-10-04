@@ -115,9 +115,9 @@ class Patchcore(AnomalyModule):
             batch = next(iter(train_dl))
 
             batch = {k: v.to(self.device) for k, v in batch.items()}
-            self.model.training = True
+            self.model.train()
             self.training_step(batch)
-            self.model.training = False
+            self.model.eval()
 
         logger.info("Aggregating the embedding extracted from the training set.")
         embeddings = torch.vstack(self.embeddings)
@@ -136,8 +136,6 @@ class Patchcore(AnomalyModule):
         Returns:
             dict[str, Any]: Image filenames, test images, GT and predicted label/masks
         """
-        # Set here as it breaks when batch_size_finder callback is used
-        self.model.training = False
         del args, kwargs  # These variables are not used.
 
         anomaly_maps, anomaly_score = self.model(batch["image"])
