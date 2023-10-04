@@ -80,6 +80,10 @@ class Patchcore(AnomalyModule):
         """
         return None
 
+    def on_train_epoch_start(self) -> None:
+        self.embeddings = []
+        return super().on_train_epoch_start()
+
     def training_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> None:
         """Generate feature embedding of the batch.
 
