@@ -70,7 +70,6 @@ class Patchcore(AnomalyModule):
         self.embeddings: list[Tensor] = []
         # self.automatic_optimization = False
         self.coreset_sampler = coreset_sampler
-        self.is_memory_bank_fitted = False
 
     def configure_optimizers(self) -> None:
         """Configure optimizers.
@@ -124,7 +123,6 @@ class Patchcore(AnomalyModule):
 
         logger.info("Applying core-set subsampling to get the embedding.")
         self.model.subsample_embedding(embeddings, self.coreset_sampling_ratio, mode=self.coreset_sampler)
-        self.is_memory_bank_fitted = True
 
     def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:
         """Get batch of anomaly maps from input image batch.
