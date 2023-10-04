@@ -132,6 +132,8 @@ class Patchcore(AnomalyModule):
         Returns:
             dict[str, Any]: Image filenames, test images, GT and predicted label/masks
         """
+        # Set here as it breaks when batch_size_finder callback is used
+        self.model.training = False
         del args, kwargs  # These variables are not used.
 
         anomaly_maps, anomaly_score = self.model(batch["image"])
