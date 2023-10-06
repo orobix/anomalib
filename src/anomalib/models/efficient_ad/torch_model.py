@@ -142,12 +142,16 @@ class Decoder(nn.Module):
 
     Args:
         out_channels (int): number of convolution output channels
+        img_size (tuple): size of input images
     """
 
     def __init__(self, out_channels, padding, img_size, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.img_size = img_size
-        self.last_upsample = int(img_size / 4) if padding else int(img_size / 4) - 8
+        self.last_upsample = (
+            int(img_size[0] / 4) if padding else int(img_size[0] / 4) - 8,
+            int(img_size[1] / 4) if padding else int(img_size[1] / 4) - 8,
+        )
         self.deconv1 = nn.Conv2d(64, 64, kernel_size=4, stride=1, padding=2)
         self.deconv2 = nn.Conv2d(64, 64, kernel_size=4, stride=1, padding=2)
         self.deconv3 = nn.Conv2d(64, 64, kernel_size=4, stride=1, padding=2)
@@ -164,22 +168,22 @@ class Decoder(nn.Module):
         self.dropout6 = nn.Dropout(p=0.2)
 
     def forward(self, x):
-        x = F.interpolate(x, size=int(self.img_size / 64) - 1, mode="bilinear")
+        x = F.interpolate(x, size=(int(self.img_size[0] / 64) - 1, int(self.img_size[1] / 64) - 1), mode="bilinear")
         x = F.relu(self.deconv1(x))
         x = self.dropout1(x)
-        x = F.interpolate(x, size=int(self.img_size / 32), mode="bilinear")
+        x = F.interpolate(x, size=(int(self.img_size[0] / 32), int(self.img_size[1] / 32)), mode="bilinear")
         x = F.relu(self.deconv2(x))
         x = self.dropout2(x)
-        x = F.interpolate(x, size=int(self.img_size / 16) - 1, mode="bilinear")
+        x = F.interpolate(x, size=(int(self.img_size[0] / 16) - 1, int(self.img_size[1] / 16) - 1), mode="bilinear")
         x = F.relu(self.deconv3(x))
         x = self.dropout3(x)
-        x = F.interpolate(x, size=int(self.img_size / 8), mode="bilinear")
+        x = F.interpolate(x, size=(int(self.img_size[0] / 8), int(self.img_size[1] / 8)), mode="bilinear")
         x = F.relu(self.deconv4(x))
         x = self.dropout4(x)
-        x = F.interpolate(x, size=int(self.img_size / 4) - 1, mode="bilinear")
+        x = F.interpolate(x, size=(int(self.img_size[0] / 4) - 1, int(self.img_size[1] / 4) - 1), mode="bilinear")
         x = F.relu(self.deconv5(x))
         x = self.dropout5(x)
-        x = F.interpolate(x, size=int(self.img_size / 2) - 1, mode="bilinear")
+        x = F.interpolate(x, size=(int(self.img_size[0] / 2) - 1, int(self.img_size[1] / 2) - 1), mode="bilinear")
         x = F.relu(self.deconv6(x))
         x = self.dropout6(x)
         x = F.interpolate(x, size=self.last_upsample, mode="bilinear")
@@ -242,7 +246,7 @@ def get_pdn_medium(out_channels=384, padding=False):
     )
 
 
-def get_autoencoder(out_channels=384):
+def get_autoencoder(img_size, out_channels=384, padding=False):
     return nn.Sequential(
         # encoder
         nn.Conv2d(in_channels=3, out_channels=32, kernel_size=4, stride=2, padding=1),
@@ -257,34 +261,7 @@ def get_autoencoder(out_channels=384):
         nn.ReLU(inplace=True),
         nn.Conv2d(in_channels=64, out_channels=64, kernel_size=8),
         # decoder
-        nn.Upsample(size=3, mode="bilinear"),
-        nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1, padding=2),
-        nn.ReLU(inplace=True),
-        nn.Dropout(0.2),
-        nn.Upsample(size=8, mode="bilinear"),
-        nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1, padding=2),
-        nn.ReLU(inplace=True),
-        nn.Dropout(0.2),
-        nn.Upsample(size=15, mode="bilinear"),
-        nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1, padding=2),
-        nn.ReLU(inplace=True),
-        nn.Dropout(0.2),
-        nn.Upsample(size=32, mode="bilinear"),
-        nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1, padding=2),
-        nn.ReLU(inplace=True),
-        nn.Dropout(0.2),
-        nn.Upsample(size=63, mode="bilinear"),
-        nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1, padding=2),
-        nn.ReLU(inplace=True),
-        nn.Dropout(0.2),
-        nn.Upsample(size=127, mode="bilinear"),
-        nn.Conv2d(in_channels=64, out_channels=64, kernel_size=4, stride=1, padding=2),
-        nn.ReLU(inplace=True),
-        nn.Dropout(0.2),
-        nn.Upsample(size=56, mode="bilinear"),
-        nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1),
-        nn.ReLU(inplace=True),
-        nn.Conv2d(in_channels=64, out_channels=out_channels, kernel_size=3, stride=1, padding=1),
+        Decoder(out_channels, padding, img_size),
     )
 
 
@@ -340,11 +317,9 @@ class EfficientAdModel(nn.Module):
             raise ValueError(f"Unknown model size {self.model_size}")
 
         if self.pretrained_teacher_type == "anomalib":
-            self.ae: AutoEncoder = AutoEncoder(
-                out_channels=teacher_out_channels, padding=padding, img_size=input_size[0]
-            )
+            self.ae: AutoEncoder = AutoEncoder(out_channels=teacher_out_channels, padding=padding, img_size=input_size)
         else:
-            self.ae: nn.Sequential = get_autoencoder(out_channels=teacher_out_channels)
+            self.ae: nn.Sequential = get_autoencoder(img_size=input_size, out_channels=teacher_out_channels)
 
         self.teacher_out_channels: int = teacher_out_channels
         self.input_size: tuple[int, int] = input_size
@@ -426,15 +401,7 @@ class EfficientAdModel(nn.Module):
 
             student_output_ae_aug = self.student(aug_img)[:, self.teacher_out_channels :, :, :]
 
-            if teacher_output_aug.shape != ae_output_aug.shape:
-                teacher_output_aug = F.interpolate(teacher_output_aug, size=ae_output_aug.shape[2:], mode="bilinear")
-
             distance_ae = torch.pow(teacher_output_aug - ae_output_aug, 2)
-
-            if student_output_ae_aug.shape != ae_output_aug.shape:
-                student_output_ae_aug = F.interpolate(
-                    student_output_ae_aug, size=ae_output_aug.shape[2:], mode="bilinear"
-                )
 
             distance_stae = torch.pow(ae_output_aug - student_output_ae_aug, 2)
 
@@ -447,9 +414,6 @@ class EfficientAdModel(nn.Module):
                 ae_output = self.ae(batch)
 
             map_st = torch.mean(distance_st, dim=1, keepdim=True)
-
-            if student_output.shape != ae_output.shape:
-                student_output = F.interpolate(student_output, size=ae_output.shape[2:], mode="bilinear")
 
             map_stae = torch.mean(
                 (ae_output - student_output[:, self.teacher_out_channels :]) ** 2, dim=1, keepdim=True
