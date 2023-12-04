@@ -331,7 +331,7 @@ class EfficientAdLightning(EfficientAd):
             pretrained_models_dir=hparams.model.pretrained_models_dir,
             imagenette_dir=hparams.model.imagenette_dir,
             pad_maps=hparams.model.pad_maps,
-            pre_padding=tuple(hparams.model.pre_padding),
+            pre_padding=tuple(hparams.model.pre_padding) if hparams.model.pre_padding is not None else None,
             pretrained_teacher_type=hparams.model.pretrained_teacher_type,
         )
         self.hparams: DictConfig | ListConfig  # type: ignore
