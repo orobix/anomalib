@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.7.0+obx.1.2.7]
+
+### Added
+
+- Efficient_ad can now pre-pad images to work around anomaly map frame issue
+
+### Fixed
+
+- Reduce efficient_ad memory footprint
+
 ## [v0.7.0+obx.1.2.6]
 
 ### Updated
