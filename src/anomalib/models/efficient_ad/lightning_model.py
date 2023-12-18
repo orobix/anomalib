@@ -79,7 +79,7 @@ class EfficientAd(AnomalyModule):
         pad_maps (bool): relevant if padding is set to False. In this case, pad_maps = True pads the
             output anomaly maps so that their size matches the size in the padding = True case.
         batch_size (int): batch size for imagenet dataloader
-        pre_padding (tuple): [left, right, top, bottom] padding to add before the forward.
+        pre_padding (bool):If true, add a padding at
         pretrained_teacher_type (str): Type of pretrained model. Currently nelson and anomalib are supported.
     """
 
@@ -95,7 +95,7 @@ class EfficientAd(AnomalyModule):
         padding: bool = False,
         pad_maps: bool = True,
         batch_size: int = 1,
-        pre_padding: Optional[Tuple] = None,
+        pre_padding: Optional[bool] = False,
         pretrained_teacher_type: Literal["nelson", "anomalib"] = "nelson",
     ) -> None:
         super().__init__()
@@ -176,8 +176,8 @@ class EfficientAd(AnomalyModule):
 
         logger.info("Calculate teacher channel mean and std")
         for batch in tqdm.tqdm(dataloader, desc="Calculate teacher channel mean", position=0, leave=True):
-            if self.pre_padding is not None:
-                batch["image"] = torch.nn.functional.pad(batch["image"], self.pre_padding)
+            if self.pre_padding:
+                batch["image"] = torch.nn.functional.pad(batch["image"], self.model.pre_padding_values)
             y = self.model.teacher(batch["image"].to(self.device))
             y_means.append(torch.mean(y, dim=[0, 2, 3]))
 
@@ -209,8 +209,8 @@ class EfficientAd(AnomalyModule):
         for batch in tqdm.tqdm(dataloader, desc="Calculate Validation Dataset Quantiles", position=0, leave=True):
             for img, label in zip(batch["image"], batch["label"]):
                 if label == 0:  # only use good images of validation set!
-                    if self.pre_padding is not None:
-                        img = torch.nn.functional.pad(img, self.pre_padding)
+                    if self.pre_padding:
+                        img = torch.nn.functional.pad(img, self.model.pre_padding_values)
                     output = self.model(img.to(self.device))
                     map_st = output[2]
                     map_ae = output[3]
@@ -331,7 +331,7 @@ class EfficientAdLightning(EfficientAd):
             pretrained_models_dir=hparams.model.pretrained_models_dir,
             imagenette_dir=hparams.model.imagenette_dir,
             pad_maps=hparams.model.pad_maps,
-            pre_padding=tuple(hparams.model.pre_padding) if hparams.model.pre_padding is not None else None,
+            pre_padding=hparams.model.pre_padding,
             pretrained_teacher_type=hparams.model.pretrained_teacher_type,
         )
         self.hparams: DictConfig | ListConfig  # type: ignore
