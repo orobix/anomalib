@@ -1,26 +1,19 @@
-albumentations==1.3.*
+# Installed from quadra
+# albumentations
+# torchvision
+# timm
+# opencv-python-headless
+# pandas
+# pytorch-lightning
+# torchmetrics
+# matplotlib
+
 einops==0.6.*
 kornia==0.6.5
 omegaconf==2.3.*
-opencv-python-headless==4.7.0.*
-pandas<2.0.0
-pytorch-lightning==1.9.*
-# torchvision==0.13.* Installed using aigord
-timm==0.6.12
-torchmetrics==0.10.* # 0.11 will remove auc function completely
 freia==0.2.*
 wandb==0.12.17
-matplotlib==3.6.*
 gradio==3.0.2
 imgaug==0.4.0
 line-profiler==3.5.1
 jsonargparse[signatures]~=4.3.0
-
-# 0.4.0 missing requirements
-# kornia>=0.6.6,<0.6.10
-# torchtext>=0.9.1
-# pytorch-lightning>=1.6.0,<1.7.0
-# timm==0.5.4
-# torchmetrics>=0.9.1,<=0.9.3
-# torchvision>=0.9.1,<=0.13.0
-# torchtext>=0.9.1,<=0.13.0
