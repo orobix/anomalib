@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [v0.7.0+obx.1.2.9]
 
+### Added
+
+- Default values for n_features for Padim backbones.
+
+## [v0.7.0+obx.1.2.9]
+
 ### Changed
 
 - Remove packages that are already installed from quadra repository.
