@@ -20,7 +20,11 @@ from anomalib.pre_processing import Tiler
 # defaults from the paper
 _N_FEATURES_DEFAULTS = {
     "resnet18": 100,
+    "resnet18.tv_in1k": 100,
     "wide_resnet50_2": 550,
+    "wide_resnet50_2.tv_in1k": 550,
+    "wide_resnet50_2.tv2_in1k": 550,
+    "wide_resnet50_2.racm_in1k": 550,
     "mobilenet_v2": 100,
 }
 
