@@ -14,7 +14,7 @@ import pytorch_lightning as pl
 from anomalib.models.components.losses import dice
 import torch
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 from torch import Tensor, nn
 from torchmetrics import Metric
 
@@ -55,6 +55,8 @@ class AnomalyModule(pl.LightningModule, ABC):
         self.pixel_metrics: AnomalibMetricCollection
         self.false_good = 0
         self.false_bad = 0
+        self.validation_outputs = []
+        self.test_outputs = []
 
     def forward(self, batch: dict[str, str | Tensor], *args, **kwargs) -> Any:
         """Forward-pass input tensor to the module.
@@ -117,34 +119,32 @@ class AnomalyModule(pl.LightningModule, ABC):
 
         Returns:
           Dictionary containing images, features, true labels and masks.
-          These are required in `validation_epoch_end` for feature concatenation.
+          These are required in `on_validation_epoch_end` for feature concatenation.
         """
         del args, kwargs  # These variables are not used.
 
         return self.predict_step(batch, batch_idx)
 
-    def validation_step_end(self, val_step_outputs: STEP_OUTPUT, *args, **kwargs) -> STEP_OUTPUT:
+    def on_validation_batch_end(self, outputs: STEP_OUTPUT, *args, **kwargs) -> STEP_OUTPUT:
         """Called at the end of each validation step."""
         del args, kwargs  # These variables are not used.
 
-        self._outputs_to_cpu(val_step_outputs)
-        self._post_process(val_step_outputs)
-        return val_step_outputs
+        self._outputs_to_cpu(outputs)
+        self._post_process(outputs)
 
-    def test_step_end(self, test_step_outputs: STEP_OUTPUT, *args, **kwargs) -> STEP_OUTPUT:
+        self.validation_outputs.append(outputs)
+
+    def on_test_batch_end(self, outputs: STEP_OUTPUT, *args, **kwargs) -> STEP_OUTPUT:
         """Called at the end of each test step."""
         del args, kwargs  # These variables are not used.
 
-        self._outputs_to_cpu(test_step_outputs)
-        self._post_process(test_step_outputs)
-        return test_step_outputs
+        self._outputs_to_cpu(outputs)
+        self._post_process(outputs)
+        self.test_outputs.append(outputs)
 
-    def validation_epoch_end(self, outputs: EPOCH_OUTPUT) -> None:
-        """Compute threshold and performance metrics.
-
-        Args:
-          outputs: Batch of outputs from the validation step
-        """
+    def on_validation_epoch_end(self) -> None:
+        """Compute threshold and performance metrics."""
+        outputs = self.validation_outputs
         if self.threshold_method == ThresholdMethod.ADAPTIVE:
             self._compute_adaptive_threshold(outputs)
 
@@ -158,13 +158,11 @@ class AnomalyModule(pl.LightningModule, ABC):
 
         self._collect_outputs(self.image_metrics, self.pixel_metrics, outputs)
         self._log_metrics("validation")
+        self.validation_outputs.clear()
 
-    def test_epoch_end(self, outputs: EPOCH_OUTPUT) -> None:
-        """Compute and save anomaly scores of the test set.
-
-        Args:
-            outputs: Batch of outputs from the validation step
-        """
+    def on_test_epoch_end(self) -> None:
+        """Compute and save anomaly scores of the test set."""
+        outputs = self.test_outputs
         if hasattr(self.image_metrics, "F1Score"):
             dice_score = 0
             counter = 0
@@ -190,7 +188,7 @@ class AnomalyModule(pl.LightningModule, ABC):
         self._collect_outputs(self.image_metrics, self.pixel_metrics, outputs)
         self._log_metrics("test")
 
-    def _compute_adaptive_threshold(self, outputs: EPOCH_OUTPUT) -> None:
+    def _compute_adaptive_threshold(self, outputs: Any) -> None:
         self.image_threshold.reset()
         self.pixel_threshold.reset()
         self._collect_outputs(self.image_threshold, self.pixel_threshold, outputs)
@@ -207,7 +205,7 @@ class AnomalyModule(pl.LightningModule, ABC):
     def _collect_outputs(
         image_metric: AnomalibMetricCollection,
         pixel_metric: AnomalibMetricCollection,
-        outputs: EPOCH_OUTPUT,
+        outputs: Any,
     ) -> None:
         for output in outputs:
             image_metric.cpu()

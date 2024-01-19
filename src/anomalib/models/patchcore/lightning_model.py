@@ -13,7 +13,7 @@ import logging
 import torch
 from torch import nn
 from omegaconf import DictConfig, ListConfig
-from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 from torch import Tensor
 
 from anomalib.models.components import AnomalyModule

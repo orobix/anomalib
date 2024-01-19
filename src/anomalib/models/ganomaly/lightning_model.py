@@ -9,11 +9,12 @@ https://arxiv.org/abs/1805.06725
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import torch
 from omegaconf import DictConfig, ListConfig
 from pytorch_lightning.callbacks import Callback, EarlyStopping
-from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 from torch import Tensor, optim
 
 from anomalib.models.components import AnomalyModule
@@ -157,12 +158,12 @@ class Ganomaly(AnomalyModule):
         self.min_scores = min(self.min_scores, torch.min(batch["pred_scores"]))
         return batch
 
-    def validation_epoch_end(self, outputs: EPOCH_OUTPUT) -> EPOCH_OUTPUT:
+    def on_validation_epoch_end(self, outputs: Any) -> Any:
         """Normalize outputs based on min/max values."""
         logger.info("Normalizing validation outputs based on min/max values.")
         for prediction in outputs:
             prediction["pred_scores"] = self._normalize(prediction["pred_scores"])
-        super().validation_epoch_end(outputs)
+        super().on_validation_epoch_end(outputs)
         return outputs
 
     def on_test_start(self) -> None:
@@ -177,12 +178,13 @@ class Ganomaly(AnomalyModule):
         self.min_scores = min(self.min_scores, torch.min(batch["pred_scores"]))
         return batch
 
-    def test_epoch_end(self, outputs: EPOCH_OUTPUT) -> EPOCH_OUTPUT:
+    def on_test_epoch_end(self) -> Any:
         """Normalize outputs based on min/max values."""
+        outputs = self.test_output_list
         logger.info("Normalizing test outputs based on min/max values.")
         for prediction in outputs:
             prediction["pred_scores"] = self._normalize(prediction["pred_scores"])
-        super().test_epoch_end(outputs)
+        super().on_test_epoch_end()
         return outputs
 
     def _normalize(self, scores: Tensor) -> Tensor:

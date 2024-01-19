@@ -104,7 +104,7 @@ class ReverseDistillation(AnomalyModule):
 
         Returns:
           Dictionary containing images, anomaly maps, true labels and masks.
-          These are required in `validation_epoch_end` for feature concatenation.
+          These are required in `on_validation_epoch_end` for feature concatenation.
         """
         del args, kwargs  # These variables are not used.
 
