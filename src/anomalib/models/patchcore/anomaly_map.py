@@ -11,12 +11,6 @@ from torch import Tensor, nn
 from torch.jit import script_if_tracing
 from torch.nn.functional import conv2d
 import torch
-from torchvision.transforms.functional_tensor import (
-    _assert_image_tensor,
-    _get_gaussian_kernel2d,
-    _cast_squeeze_in,
-    _cast_squeeze_out,
-)
 from anomalib.models.components import GaussianBlur2d
 
 
