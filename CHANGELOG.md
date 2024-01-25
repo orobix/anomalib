@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.7.0+obx.1.3.0]
+
+### Updated
+
+- Update lightning related code to support changes introduced with lightning 2.*
+
 ## [v0.7.0+obx.1.2.11]
 
 ### Fixed
