@@ -127,7 +127,7 @@ class Padim(AnomalyModule):
 
         Returns:
             Dictionary containing images, features, true labels and masks.
-            These are required in `validation_epoch_end` for feature concatenation.
+            These are required in `on_validation_epoch_end` for feature concatenation.
         """
         del args, kwargs  # These variables are not used.
 

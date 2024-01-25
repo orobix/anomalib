@@ -48,7 +48,7 @@ class DummyModule(AnomalyModule):
         self.pixel_metrics.set_threshold(hparams.model.threshold.pixel_default)
 
     def test_step(self, batch, _):
-        """Only used to trigger on_test_epoch_end."""
+        """Only used to trigger on_on_test_epoch_end."""
         self.log(name="loss", value=0.0, prog_bar=True)
         outputs = dict(
             image_path=[Path(get_dataset_path("bottle")) / "broken_large/000.png"],
@@ -61,10 +61,10 @@ class DummyModule(AnomalyModule):
         )
         return outputs
 
-    def validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self, outputs):
         return None
 
-    def test_epoch_end(self, outputs):
+    def on_test_epoch_end(self):
         return None
 
     def configure_optimizers(self):
