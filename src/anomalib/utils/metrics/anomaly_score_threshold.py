@@ -40,17 +40,31 @@ class AnomalyScoreThreshold(PrecisionRecallCurve):
             Value of the F1 score at the optimal threshold.
         """
         current_targets = torch.concat(self.target)
+        current_preds = torch.concat(self.preds)
 
         epsilon = 1e-3
 
         if len(current_targets.unique()) == 1:
             if current_targets.max() == 0:
-                self.value = torch.concat(self.preds).max() + epsilon
+                self.value = torch.concat(current_preds).max() + epsilon
             else:
-                self.value = torch.concat(self.preds).min()
+                self.value = torch.concat(current_preds).min() - epsilon
         else:
             precision, recall, thresholds = super().compute()
             f1_score = (2 * precision * recall) / (precision + recall + 1e-10)
-            self.value = thresholds[torch.argmax(f1_score)]
+            optimal_f1_score = torch.max(f1_score)
+
+            if thresholds.nelement() == 1:
+                # Particular case when f1 score is 1 and the threshold is unique
+                self.value = thresholds
+            else:
+                if optimal_f1_score == 1:
+                    # If there is a good boundary between good and bads we pick the average of the highest good
+                    # and lowest bad
+                    max_good_score = current_preds[torch.where(current_targets == 0)].max()
+                    min_bad_score = current_preds[torch.where(current_targets == 1)].min()
+                    self.value = (max_good_score + min_bad_score) / 2
+                else:
+                    self.value = thresholds[torch.argmax(f1_score)]
 
         return self.value

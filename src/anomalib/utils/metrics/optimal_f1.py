@@ -50,26 +50,36 @@ class OptimalF1(Metric):
         recall: torch.Tensor
         thresholds: torch.Tensor
         current_targets = torch.concat(self.precision_recall_curve.target)
+        current_preds = torch.concat(self.precision_recall_curve.preds)
 
         epsilon = 1e-3
         if len(current_targets.unique()) == 1:
             optimal_f1_score = torch.tensor(1.0)
 
             if current_targets.max() == 0:
-                self.threshold = torch.concat(self.precision_recall_curve.preds).max() + epsilon
+                self.threshold = current_preds.max() + epsilon
             else:
-                self.threshold = torch.concat(self.precision_recall_curve.preds).min()
+                self.threshold = current_preds.min() - epsilon
 
             return optimal_f1_score
         else:
             precision, recall, thresholds = self.precision_recall_curve.compute()
             f1_score = (2 * precision * recall) / (precision + recall + 1e-10)
+            optimal_f1_score = torch.max(f1_score)
+
             if thresholds.nelement() == 1:
                 # Particular case when f1 score is 1 and the threshold is unique
                 self.threshold = thresholds
             else:
-                self.threshold = thresholds[torch.argmax(f1_score)]
-            optimal_f1_score = torch.max(f1_score)
+                if optimal_f1_score == 1:
+                    # If there is a good boundary between good and bads we pick the average of the highest good
+                    # and lowest bad
+                    max_good_score = current_preds[torch.where(current_targets == 0)].max()
+                    min_bad_score = current_preds[torch.where(current_targets == 1)].min()
+                    self.threshold = (max_good_score + min_bad_score) / 2
+                else:
+                    self.threshold = thresholds[torch.argmax(f1_score)]
+
             return optimal_f1_score
 
     def reset(self) -> None:
