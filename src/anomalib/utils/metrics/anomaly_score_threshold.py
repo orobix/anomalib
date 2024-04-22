@@ -46,9 +46,9 @@ class AnomalyScoreThreshold(PrecisionRecallCurve):
 
         if len(current_targets.unique()) == 1:
             if current_targets.max() == 0:
-                self.value = torch.concat(current_preds).max() + epsilon
+                self.value = current_preds.max() + epsilon
             else:
-                self.value = torch.concat(current_preds).min() - epsilon
+                self.value = current_preds.min() - epsilon
         else:
             precision, recall, thresholds = super().compute()
             f1_score = (2 * precision * recall) / (precision + recall + 1e-10)
