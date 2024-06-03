@@ -124,13 +124,15 @@ class EfficientAd(AnomalyModule):
     def prepare_pretrained_model(self) -> None:
         if self.model.pretrained_teacher_type == "nelson":
             if self.model.model_size == EfficientAdModelSize.S:
-                teacher_path = self.pretrained_models_dir / NELSON_TEACHER_S.name
-                download_single_file(self.pretrained_models_dir, NELSON_TEACHER_S)
+                model_type = NELSON_TEACHER_S
             else:
-                teacher_path = self.pretrained_models_dir / NELSON_TEACHER_M.name
-                download_single_file(self.pretrained_models_dir, NELSON_TEACHER_M)
+                model_type = NELSON_TEACHER_M
+            teacher_path = self.pretrained_models_dir / model_type.name
+            # Attempt to download if file does not exist
+            download_single_file(self.pretrained_models_dir, model_type)
         else:
             download_and_extract(self.pretrained_models_dir, WEIGHTS_DOWNLOAD_INFO)
+            # Why is it nelson also here?
             teacher_path = (
                 self.pretrained_models_dir / "efficientad_pretrained_weights" / f"nelson_teacher_{self.model_size}.pth"
             )
