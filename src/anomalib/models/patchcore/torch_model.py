@@ -14,10 +14,10 @@ from omegaconf import ListConfig
 
 from anomalib.models.components import (
     DynamicBufferModule,
-    FeatureExtractor,
     KCenterGreedy,
 )
 from anomalib.models.components.dimensionality_reduction.random_projection import SparseRandomProjection
+from anomalib.models.components.feature_extractors.timm import TimmFeatureExtractor
 from anomalib.models.components.sampling.amazon_k_center_greedy import ApproximateGreedyCoresetSampler
 from anomalib.models.patchcore.anomaly_map import AnomalyMapGenerator
 from anomalib.pre_processing import Tiler
@@ -72,7 +72,7 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
         self.num_neighbors: Tensor
         self.score_computation = score_computation
 
-        self.feature_extractor = FeatureExtractor(
+        self.feature_extractor = TimmFeatureExtractor(
             backbone=self.backbone, layers=self.layers, pre_trained=pre_trained, pretrained_weights=pretrained_weights
         )
         self.feature_pooler = torch.nn.AvgPool2d(3, 1, 1)
