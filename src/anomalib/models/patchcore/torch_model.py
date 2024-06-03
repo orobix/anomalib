@@ -72,25 +72,9 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
         self.num_neighbors: Tensor
         self.score_computation = score_computation
 
-        # TODO: Hardcoded stuff I think for ssl?
-        if pretrained_weights is not None and not isinstance(self.backbone, str):
-            log.info("Loading pretrained weights")
-
-            with open(pretrained_weights, "rb") as f:
-                weights = torch.load(f)
-
-            new_state_dict = OrderedDict()
-
-            for key, value in weights["state_dict"].items():
-                if "student" in key or "teacher" in key:
-                    continue
-
-                new_key = key.replace("model.features_extractor.", "")
-                new_state_dict[new_key] = value
-
-            self.backbone.load_state_dict(new_state_dict, strict=False)
-
-        self.feature_extractor = FeatureExtractor(backbone=self.backbone, layers=self.layers, pre_trained=pre_trained)
+        self.feature_extractor = FeatureExtractor(
+            backbone=self.backbone, layers=self.layers, pre_trained=pre_trained, pretrained_weights=pretrained_weights
+        )
         self.feature_pooler = torch.nn.AvgPool2d(3, 1, 1)
         self.anomaly_map_generator = AnomalyMapGenerator(input_size=input_size)
 
