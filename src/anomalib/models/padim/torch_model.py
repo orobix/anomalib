@@ -14,6 +14,7 @@ from torch import Tensor, nn
 
 from anomalib.models.components import FeatureExtractor, MultiVariateGaussian
 from anomalib.models.components.feature_extractors import dryrun_find_featuremap_dims
+from anomalib.models.components.feature_extractors.timm import TimmFeatureExtractor
 from anomalib.models.padim.anomaly_map import AnomalyMapGenerator
 from anomalib.pre_processing import Tiler
 
@@ -87,7 +88,7 @@ class PadimModel(nn.Module):
         self.layers = layers
         self.backbone = backbone
 
-        self.feature_extractor = FeatureExtractor(
+        self.feature_extractor = TimmFeatureExtractor(
             backbone=self.backbone, layers=layers, pre_trained=pre_trained, pretrained_weights=pretrained_weights
         )
         self.n_features_original, self.n_patches = _deduce_dims(self.feature_extractor, input_size, self.layers)
