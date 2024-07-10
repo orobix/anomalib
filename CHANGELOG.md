@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.7.0+obx.1.3.4]
+
+### Added
+
+- Add three new flags to change the anomaly computation for patchcore
+    - `disable_score_weighting` which disables reweighting the anomaly score based on the anomalib formula
+    - `weight_anomaly_map` which apply the same weight used for the anomaly score to the whole anomaly map
+    - `anomaly_score_from_max_heatmap` which computes the anomaly score from the max value of the anomaly map
+
+    The latter is the one impacting the most the anomaly score computation as it will extract the max of the anomaly
+    map after the application of the pooling, this is the only way ensuring that the anomaly score is the maximum
+    value of the anomaly map. Disable score weighting should only be used if this flag is set to False, otherwise the
+    anomaly score will be replaced by the max of the anomaly map.
+
 ## [v0.7.0+obx.1.3.3]
 
 ### Fixed
