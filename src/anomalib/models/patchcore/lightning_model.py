@@ -35,10 +35,16 @@ class Patchcore(AnomalyModule):
         num_neighbors (int, optional): Number of nearest neighbors. Defaults to 9.
         pretrained_weights (str, optional): Path to pretrained weights. Defaults to None.
         compress_memory_bank (bool): If true the memory bank features are projected to a lower dimensionality following
-        the Johnson-Lindenstrauss lemma.
+            the Johnson-Lindenstrauss lemma.
         coreset_sampler (str): Coreset sampler to use. Defaults to "anomalib".
         score_computation (str): Score computation to use. Defaults to "anomalib". If "amazon" is used, the anomaly
-        score is correctly computed as from the paper but it may require more time to compute.
+            score is correctly computed as from the paper but it may require more time to compute.
+        disable_score_weighting: If true, the model will not apply the weight factor to the anomaly score. Only works if
+            score_computation is set to anomalib.
+        weight_anomaly_map: If true, the model will apply the weight factor to the whole anomaly map, this might be
+            useful as the anomaly score is now the max of the anomaly map. Only enabled if disable_score_weighting is
+            False. Only works if score_computation is set to anomalib.
+        anomaly_score_from_max_heatmap: If true, the anomaly score will be the max of the anomaly map.
     """
 
     def __init__(
@@ -53,6 +59,9 @@ class Patchcore(AnomalyModule):
         compress_memory_bank: bool = False,
         coreset_sampler: str = "anomalib",
         score_computation: str = "anomalib",
+        disable_score_weighting: bool = False,
+        weight_anomaly_map: bool = False,
+        anomaly_score_from_max_heatmap: bool = False,
     ) -> None:
         super().__init__()
 
@@ -65,6 +74,9 @@ class Patchcore(AnomalyModule):
             pretrained_weights=pretrained_weights,
             compress_memory_bank=compress_memory_bank,
             score_computation=score_computation,
+            disable_score_weighting=disable_score_weighting,
+            weight_anomaly_map=weight_anomaly_map,
+            anomaly_score_from_max_heatmap=anomaly_score_from_max_heatmap,
         )
         self.coreset_sampling_ratio = coreset_sampling_ratio
         self.embeddings: list[Tensor] = []
@@ -168,6 +180,9 @@ class PatchcoreLightning(Patchcore):
             compress_memory_bank=getattr(hparams.model, "compress_memory_bank", False),
             coreset_sampler=getattr(hparams.model, "coreset_sampler", "anomalib"),
             score_computation=getattr(hparams.model, "score_computation", "anomalib"),
+            disable_score_weighting=getattr(hparams.model, "disable_score_weighting", False),
+            weight_anomaly_map=getattr(hparams.model, "weight_anomaly_map", False),
+            anomaly_score_from_max_heatmap=getattr(hparams.model, "anomaly_score_from_max_heatmap", False),
         )
         self.hparams: DictConfig | ListConfig  # type: ignore
         self.save_hyperparameters(hparams)
