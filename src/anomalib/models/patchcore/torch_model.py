@@ -47,7 +47,12 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
         compress_memory_bank: If true the memory bank features are projected to a lower dimensionality following the
         Johnson-Lindenstrauss lemma.
         score_computation: Method to use for anomaly score computation either amazon or anomalib.
-
+        disable_score_weighting: If true, the model will not apply the weight factor to the anomaly score. Only works if
+            score_computation is set to anomalib.
+        weight_anomaly_map: If true, the model will apply the weight factor to the whole anomaly map, this might be
+            useful as the anomaly score is now the max of the anomaly map. Only enabled if disable_score_weighting is
+            False. Only works if score_computation is set to anomalib.
+        anomaly_score_from_max_heatmap: If true, the anomaly score will be the max of the anomaly map.
     """
 
     def __init__(
@@ -60,6 +65,9 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
         pretrained_weights: Optional[str] = None,
         compress_memory_bank: bool = False,
         score_computation: str = "anomalib",
+        disable_score_weighting: bool = False,
+        weight_anomaly_map: bool = False,
+        anomaly_score_from_max_heatmap: bool = False,
     ) -> None:
         super().__init__()
         self.tiler: Optional[Tiler] = None
@@ -82,6 +90,9 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
         self.memory_bank: torch.Tensor
         self.projection_model = SparseRandomProjection(eps=0.9)
         self.compress_memory_bank = compress_memory_bank
+        self.disable_score_weighting = disable_score_weighting
+        self.weight_anomaly_map = weight_anomaly_map
+        self.anomaly_score_from_max_heatmap = anomaly_score_from_max_heatmap
 
         log.info(f"Using {self.score_computation} score computation method")
 
@@ -125,12 +136,20 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
                 patch_scores, _ = self.nearest_neighbors(embedding=embedding, n_neighbors=self.num_neighbors)
                 # Reshape patch_scores to match (batch_size, feature_dim, n_neighbours)                # TODO: Verify this is correct
                 patch_scores = patch_scores.reshape(-1, width * height, patch_scores.shape[1])
-                max_scores = torch.argmax(patch_scores[:, :, 0], dim=1)
-                confidence = compute_confidence_scores(patch_scores, max_scores)
-                weights = 1 - (torch.max(torch.exp(confidence), dim=1)[0] / torch.sum(torch.exp(confidence), dim=1))
-                anomaly_score = weights * torch.max(patch_scores[:, :, 0], dim=1)[0]
 
-                patch_scores = patch_scores[:, :, 0]
+                if not self.disable_score_weighting:
+                    max_scores = torch.argmax(patch_scores[:, :, 0], dim=1)
+                    confidence = compute_confidence_scores(patch_scores, max_scores)
+                    weights = 1 - (torch.max(torch.exp(confidence), dim=1)[0] / torch.sum(torch.exp(confidence), dim=1))
+                    patch_scores = patch_scores[:, :, 0]
+                    if self.weight_anomaly_map:
+                        patch_scores = patch_scores * weights.unsqueeze(1)
+                        anomaly_score = torch.max(patch_scores, dim=1)[0]
+                    else:
+                        anomaly_score = weights * torch.max(patch_scores, dim=1)[0]
+                else:
+                    patch_scores = patch_scores[:, :, 0]
+                    anomaly_score = torch.max(patch_scores, dim=1)[0]
             else:
                 # apply nearest neighbor search
                 patch_scores, locations = self.nearest_neighbors(embedding=embedding, n_neighbors=1)
@@ -144,6 +163,9 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
             patch_scores = patch_scores.reshape((-1, 1, width, height))
             # get anomaly map
             anomaly_map = self.anomaly_map_generator(patch_scores)
+            if self.anomaly_score_from_max_heatmap:
+                anomaly_score = anomaly_map.reshape((anomaly_map.shape[0], -1)).max(1)[0]
+
             output = (anomaly_map, anomaly_score)
 
         return output
