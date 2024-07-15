@@ -1,15 +1,39 @@
+[tool.poetry]
+name = "anomalib-orobix"
+version = "0.7.0.dev140"
+description = "Orobix anomalib fork"
+authors = [
+    "Intel OpenVINO <help@openvino.intel.com>",
+    "Lorenzo Mammana <lorenzo.mammana@orobix.com>",
+    "Alessandro Polidori <alessandro.polidori@orobix.com>",
+]
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/orobix/quadra"
+packages = [{ include = "anomalib", from = "src" }]
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SETUP CONFIGURATION.                                                        #
 [build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
+[tool.poetry.dependencies]
+python = ">=3.9,<3.11"
+einops = "~0.6"
+kornia = "0.6.5"
+omegaconf = "~2.3"
+freia = "~0.2"
+wandb = "0.12.17"
+gradio = "3.0.2"
+imgaug = "0.4.0"
+line-profiler = "3.5.1"
+jsonargparse = { version = "~4.3.0", extras = ["signatures"] }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # BLACK CONFIGURATION                                                         #
 [tool.black]
 line-length = 120
-
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # RUFF CONFIGURATION                                                          #
@@ -81,12 +105,7 @@ follow_imports_for_stubs = true
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # PYTEST CONFIGURATION                                                        #
 [tool.pytest.ini_options]
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "--showlocals",
-    "-ra",
-]
+addopts = ["--strict-markers", "--strict-config", "--showlocals", "-ra"]
 testpaths = "tests"
 pythonpath = "src"
 
@@ -103,10 +122,7 @@ exclude_lines = [
 ]
 
 [tool.coverage.paths]
-source = [
-    "src",
-    ".tox/*/site-packages",
-]
+source = ["src", ".tox/*/site-packages"]
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.7.0.dev140]
+
+### Updated
+
+- Migrate the project to Poetry to allow publishing it on PyPI!
+- Update the project version so that it is compatible with PyPI scheme, it's pretty much the same as the previous one, we use dev instead of obx to show that we are developing the project (although it is not semantically correct, it is the best we can do for now).
+
 ## [v0.7.0+obx.1.3.4]
 
 ### Added
