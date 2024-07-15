@@ -13,7 +13,18 @@ git pull sync development
 git merge github master
 ```
 
-Current version (1.2.*) is synced with anomalib tag 0.7.0.
+Current version (1.4.*) is synced with anomalib tag 0.7.0.
+
+To publish on pypi, assuming that you have setup authentication properly run:
+```bash
+poetry publish --build
+```
+
+If you are working behind company proxy run instead:
+```bash
+POETRY_REPOSITORIES_PYPI_URL="https://upload.pypi.org/legacy/" poetry publish -r pypi --build
+```
+
 
 <div align="center">
 
