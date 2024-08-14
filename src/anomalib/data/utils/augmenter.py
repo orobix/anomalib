@@ -9,21 +9,30 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-
 from __future__ import annotations
 
 import glob
 import math
 import random
+from typing import TYPE_CHECKING
 
 import cv2
-import imgaug.augmenters as iaa
 import numpy as np
 import torch
 from torch import Tensor
 from torchvision.datasets.folder import IMG_EXTENSIONS
 
 from anomalib.data.utils.generators.perlin import random_2d_perlin
+
+try:
+    import imgaug.augmenters as iaa
+
+    IMGAUG_AVAILABLE = True
+except ImportError:
+    IMGAUG_AVAILABLE = False
+
+if TYPE_CHECKING:
+    import imgaug.augmenters as iaa
 
 
 def nextpow2(value):
@@ -47,6 +56,10 @@ class Augmenter:
         p_anomalous: float = 0.5,
         beta: float | tuple[float, float] = (0.2, 1.0),
     ):
+        if not IMGAUG_AVAILABLE:
+            raise ImportError(
+                "imgaug is not installed, anomalib requires the augmentation extra to be installed to use the Augmenter class"
+            )
         self.p_anomalous = p_anomalous
         self.beta = beta
 
