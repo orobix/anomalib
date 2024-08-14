@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "anomalib-orobix"
-version = "0.7.0.dev140"
+version = "0.7.0.dev141"
 description = "Orobix anomalib fork"
 authors = [
     "Intel OpenVINO <help@openvino.intel.com>",
