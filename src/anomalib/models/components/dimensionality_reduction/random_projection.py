@@ -39,6 +39,7 @@ class SparseRandomProjection(DynamicBufferModule):
         self.sparse_random_matrix: Tensor
         self.eps = eps
         self.random_state = random_state
+        self._use_identity = False
 
     def _sparse_random_matrix(self, n_features: int):
         """Random sparse matrix. Based on https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf.
@@ -111,13 +112,16 @@ class SparseRandomProjection(DynamicBufferModule):
         device = embedding.device
 
         self.n_components = self.johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=self.eps)
-        # TODO: What if n_components > n_features?
 
-        # Generate projection matrix
-        # torch can't multiply directly on sparse matrix and moving sparse matrix to cuda throws error
-        # (Could not run 'aten::empty_strided' with arguments from the 'SparseCsrCUDA' backend)
-        # hence sparse matrix is stored as a dense matrix on the device
-        self.sparse_random_matrix = self._sparse_random_matrix(n_features=n_features).to(device)
+        if self.n_components < n_features:
+            # Generate projection matrix
+            # torch can't multiply directly on sparse matrix and moving sparse matrix to cuda throws error
+            # (Could not run 'aten::empty_strided' with arguments from the 'SparseCsrCUDA' backend)
+            # hence sparse matrix is stored as a dense matrix on the device
+            self.sparse_random_matrix = self._sparse_random_matrix(n_features=n_features).to(device)
+        else:
+            self.sparse_random_matrix = torch.tensor([])
+            self._use_identity = True
 
         return self
 
@@ -137,6 +141,9 @@ class SparseRandomProjection(DynamicBufferModule):
         """
         if self.sparse_random_matrix is None:
             raise NotFittedError("`fit()` has not been called on SparseRandomProjection yet.")
+
+        if self._use_identity:
+            return embedding
 
         if embedding.dtype == torch.float32:
             projected_embedding = embedding @ self.sparse_random_matrix.T.float()
