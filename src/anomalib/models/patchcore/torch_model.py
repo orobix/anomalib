@@ -248,13 +248,17 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
         coreset_indices = sampler.sample_coreset(compressed_embedding)
         if self.compress_memory_bank:
             self.memory_bank = compressed_embedding[coreset_indices]
+            del compressed_embedding
         else:
             del compressed_embedding
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-                embedding = embedding.to(original_device)
 
             self.memory_bank = embedding[coreset_indices]
+            self.memory_bank = self.memory_bank.to(original_device)
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def subsample_embedding_amazon(self, embedding: torch.Tensor, sampling_ratio: float) -> None:
         """Subsample embedding based on coreset sampling and store to memory.
