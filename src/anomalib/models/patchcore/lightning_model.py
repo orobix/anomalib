@@ -120,7 +120,10 @@ class Patchcore(AnomalyModule):
             if not self.trainer.sanity_checking:
                 # Initialize the embeddings tensor with the estimated number of batches
                 self.embeddings = torch.zeros(
-                    (embedding.shape[0] * (self.trainer.estimated_stepping_batches), *embedding.shape[1:]),
+                    (
+                        embedding.shape[0] * self.trainer.estimated_stepping_batches * self.trainer.max_epochs,
+                        *embedding.shape[1:],
+                    ),
                     device=self.device,
                     dtype=embedding.dtype,
                 )
