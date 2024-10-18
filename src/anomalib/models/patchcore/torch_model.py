@@ -230,7 +230,18 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
         """
         log.info("Subsampling embedding with anomalib coreset sampling")
         self.projection_model.fit(embedding)
-        compressed_embedding = self.projection_model.transform(embedding)
+        original_device = embedding.device
+
+        if not self.projection_model._use_identity:
+            compressed_embedding = self.projection_model.transform(embedding)
+
+            if torch.cuda.is_available() and embedding.device != "cpu":
+                original_device = embedding.device
+                # Unload the embedding from the GPU to free up memory
+                embedding = embedding.to("cpu")
+                torch.cuda.empty_cache()
+        else:
+            compressed_embedding = embedding
 
         # Coreset Subsampling
         sampler = KCenterGreedy(sampling_ratio=sampling_ratio)
@@ -238,6 +249,11 @@ class PatchcoreModel(DynamicBufferModule, nn.Module):
         if self.compress_memory_bank:
             self.memory_bank = compressed_embedding[coreset_indices]
         else:
+            del compressed_embedding
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                embedding = embedding.to(original_device)
+
             self.memory_bank = embedding[coreset_indices]
 
     def subsample_embedding_amazon(self, embedding: torch.Tensor, sampling_ratio: float) -> None:
