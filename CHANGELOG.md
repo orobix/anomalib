@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.7.0.dev143]
+
+### Fixed
+
+- Fix wrong embeddings initialization in patchcore when the dataset is smaller than the batch size.
+
 ## [v0.7.0.dev142]
 
 ### Updated
