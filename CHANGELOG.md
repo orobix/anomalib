@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.7.0.dev142]
+
+### Updated
+
+- Improve VRAM usage for patchcore trainings.
+
+### Fixed
+
+- Avoid projecting features to a larger space when Johnson-Lindenstrauss lemma suggests it.
+
 ## [v0.7.0.dev141]
 
 ### Updated
