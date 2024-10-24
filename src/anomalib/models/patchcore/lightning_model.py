@@ -121,7 +121,7 @@ class Patchcore(AnomalyModule):
                 # Initialize the embeddings tensor with the estimated number of batches
                 self.embeddings = torch.zeros(
                     (
-                        (embedding.shape[0] // self.trainer.train_dataloader.batch_size)
+                        (embedding.shape[0] // batch["image"].shape[0])
                         * len(self.trainer.train_dataloader.dataset)
                         * self.trainer.max_epochs,
                         *embedding.shape[1:],
