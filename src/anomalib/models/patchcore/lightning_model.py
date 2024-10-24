@@ -82,7 +82,7 @@ class Patchcore(AnomalyModule):
         self.embeddings: Tensor = torch.tensor([])
         self.automatic_optimization = False
         self.coreset_sampler = coreset_sampler
-        self.batch_counter = 0
+        self.counter = 0
 
     def configure_optimizers(self) -> None:
         """Configure optimizers.
@@ -94,7 +94,7 @@ class Patchcore(AnomalyModule):
 
     def on_train_epoch_start(self) -> None:
         self.embeddings = torch.tensor([])
-        self.batch_counter = 0
+        self.counter = 0
         return super().on_train_epoch_start()
 
     def training_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> None:
@@ -121,7 +121,9 @@ class Patchcore(AnomalyModule):
                 # Initialize the embeddings tensor with the estimated number of batches
                 self.embeddings = torch.zeros(
                     (
-                        embedding.shape[0] * self.trainer.estimated_stepping_batches * self.trainer.max_epochs,
+                        (embedding.shape[0] // self.trainer.train_dataloader.batch_size)
+                        * len(self.trainer.train_dataloader.dataset)
+                        * self.trainer.max_epochs,
                         *embedding.shape[1:],
                     ),
                     device=self.device,
@@ -131,13 +133,11 @@ class Patchcore(AnomalyModule):
                 self.embeddings = self.embeddings.to(device=self.device, dtype=embedding.dtype)
 
         if not self.trainer.sanity_checking:
-            self.embeddings[self.batch_counter * embedding.shape[0] : (self.batch_counter + 1) * embedding.shape[0]] = (
-                embedding
-            )
+            self.embeddings[self.counter : self.counter + embedding.shape[0]] = embedding
         else:
             self.embeddings = torch.cat((self.embeddings, embedding))
 
-        self.batch_counter += 1
+        self.counter += embedding.shape[0]
         zero_loss = torch.tensor(0.0, requires_grad=True, device=self.device)
         return {"loss": zero_loss}
 
@@ -159,6 +159,7 @@ class Patchcore(AnomalyModule):
         logger.info("Aggregating the embedding extracted from the training set.")
 
         logger.info("Applying core-set subsampling to get the embedding.")
+
         self.model.subsample_embedding(self.embeddings, self.coreset_sampling_ratio, mode=self.coreset_sampler)
         self.embeddings = torch.tensor([])
 
