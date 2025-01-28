@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "anomalib-orobix"
-version = "0.7.0.dev143"
+version = "0.7.0.dev150"
 description = "Orobix anomalib fork"
 authors = [
     "Intel OpenVINO <help@openvino.intel.com>",
@@ -19,21 +19,23 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.11"
+python = ">=3.10,<3.11"
 einops = "~0.6"
 kornia = "0.6.5"
 omegaconf = "~2.3"
 freia = "~0.2"
-wandb = "0.12.17"
-gradio = "3.0.2"
+
 line-profiler = "3.5.1"
 jsonargparse = { version = "~4.3.0", extras = ["signatures"] }
 
 imgaug = { version = "0.4.0", optional = true }
-
+gradio = { version = "3.0.2", optional = true }
+wandb = { version = "0.12.17", optional = true }
 [tool.poetry.extras]
 # We make imgaug optional as it requires opencv-python instead of the headless version
 augmentation = ["imgaug"]
+ui = ["gradio"]
+wandb = ["wandb"]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # BLACK CONFIGURATION                                                         #
