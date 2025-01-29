@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Updated
 
 - Update padim code to work properly with lightning 2.4.0
+- Move unused legacy dependencies to extras
 
 ## [v0.7.0.dev143]
 
