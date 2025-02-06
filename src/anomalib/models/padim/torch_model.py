@@ -121,6 +121,7 @@ class PadimModel(nn.Module):
         self.anomaly_map_generator = AnomalyMapGenerator(image_size=input_size)
 
         self.gaussian = MultiVariateGaussian(self.n_features, self.n_patches, tied_covariance=tied_covariance)
+        self.in_training_loop = False
 
     def forward(self, input_tensor: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward-pass image-batch (N, C, H, W) into model to extract features.
@@ -160,7 +161,7 @@ class PadimModel(nn.Module):
 
         anomaly_score = None
 
-        if self.training:
+        if self.in_training_loop:
             output = embeddings
         else:
             output = self.anomaly_map_generator(

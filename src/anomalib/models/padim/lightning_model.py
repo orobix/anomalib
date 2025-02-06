@@ -72,6 +72,7 @@ class Padim(AnomalyModule):
     def on_train_epoch_start(self) -> None:
         self.embeddings = []
         self.stats = []
+        self.model.in_training_loop = True
         return super().on_train_epoch_start()
 
     def training_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> None:
@@ -109,6 +110,7 @@ class Padim(AnomalyModule):
             logger.warning("No embeddings were extracted from the training set. Skipping Gaussian fitting.")
             return
 
+        self.model.in_training_loop = False
         logger.info("Aggregating the embedding extracted from the training set.")
 
         embeddings = torch.vstack(self.embeddings)
@@ -134,7 +136,14 @@ class Padim(AnomalyModule):
         batch["anomaly_maps"], _ = self.model(batch["image"])
         return batch
 
+    def on_test_start(self):
+        self.model.in_training_loop = False
+        return super().on_test_start()
 
+    def on_predict_start(self):
+        self.model.in_training_loop = False
+        return super().on_predict_start()
+    
 class PadimLightning(Padim):
     """PaDiM: a Patch Distribution Modeling Framework for Anomaly Detection and Localization.
 
