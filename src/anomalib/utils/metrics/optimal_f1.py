@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """Implementation of Optimal F1 score based on TorchMetrics."""
-from typing import Optional
+
 import warnings
+from typing import Optional
 
 import torch
 from torch import Tensor
@@ -54,12 +55,21 @@ class OptimalF1(Metric):
 
         epsilon = 1e-3
         if len(current_targets.unique()) == 1:
+            # Use torch nextafter to ensure that the threshold is higher (or smaller)
+            # than the maximum (or minimum) score. This ensures correctness for lower precisions.
+            # Combined method is to avoid very small shifts around zero.
+            _inf = torch.tensor(torch.inf, dtype=current_preds.dtype, device=current_preds.device)
             optimal_f1_score = torch.tensor(1.0)
 
             if current_targets.max() == 0:
-                self.threshold = current_preds.max() + epsilon
+                max_score = current_preds.max()
+                self.threshold = torch.max(torch.nextafter(max_score, _inf), max_score + epsilon)
             else:
-                self.threshold = current_preds.min() - epsilon
+                min_score = current_preds.min()
+                self.threshold = torch.min(torch.nextafter(min_score, -_inf), min_score - epsilon)
+
+            if torch.isinf(self.threshold) or torch.isnan(self.threshold):
+                raise RuntimeError(f"Invalid value computed for the threshold: {self.threshold}.")
 
             return optimal_f1_score
         else:

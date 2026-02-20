@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v.0.7.0.dev151]
+
+### Fixed
+
+- Use combined torch.nextafter and fixed epsilon to select optimal threshold when only one target is present.
+
 ## [v.0.7.0.dev150]
 
 ### Updated
