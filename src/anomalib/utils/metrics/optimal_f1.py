@@ -68,7 +68,7 @@ class OptimalF1(Metric):
                 min_score = current_preds.min()
                 self.threshold = torch.min(torch.nextafter(min_score, -_inf), min_score - epsilon)
 
-            if torch.isinf(self.threshold):
+            if torch.isinf(self.threshold) or torch.isnan(self.threshold):
                 raise RuntimeError(f"Invalid value computed for the threshold: {self.threshold}.")
 
             return optimal_f1_score
