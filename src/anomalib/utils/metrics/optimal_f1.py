@@ -9,7 +9,6 @@ from typing import Optional
 import torch
 from torch import Tensor
 from torchmetrics import Metric, PrecisionRecallCurve
-from zmq import device
 
 
 class OptimalF1(Metric):
@@ -57,7 +56,7 @@ class OptimalF1(Metric):
         epsilon = 1e-3
         if len(current_targets.unique()) == 1:
             # Use torch nextafter to ensure that the threshold is higher (or smaller)
-            # than the maximum (or minimum) score. This ensure correctness for lower precisions.
+            # than the maximum (or minimum) score. This ensures correctness for lower precisions.
             # Combined method is to avoid very small shifts around zero.
             _inf = torch.tensor(torch.inf, dtype=current_preds.dtype, device=current_preds.device)
             optimal_f1_score = torch.tensor(1.0)
